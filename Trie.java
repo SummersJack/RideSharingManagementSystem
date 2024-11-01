@@ -37,12 +37,17 @@ public class Trie {
      * @return True if the word exists, false otherwise.
      */
     public boolean search(String word) {
-        TrieNode node = root;
-        for (char c : word.toCharArray()) {
-            node = node.children.get(c);
-            if (node == null) return false;
+        return searchHelper(root, word, 0);
+    }
+
+    private boolean searchHelper(TrieNode node, String word, int index) {
+        if (index == word.length()) {
+            return node.isEndOfWord; // return true if it's end of a valid word
         }
-        return node.isEndOfWord;
+        
+        char c = word.charAt(index);
+        TrieNode childNode = node.children.get(c);
+        return childNode != null && searchHelper(childNode, word, index + 1);
     }
 
     /**
@@ -89,19 +94,22 @@ public class Trie {
     public List<String> autocomplete(String prefix) {
         List<String> results = new ArrayList<>();
         TrieNode node = root;
+        
         for (char c : prefix.toCharArray()) {
             node = node.children.get(c);
             if (node == null) return results; // no words with this prefix
         }
+        
         findWords(node, results, new StringBuilder(prefix));
         return results;
     }
 
     private void findWords(TrieNode node, List<String> results, StringBuilder sb) {
         if (node.isEndOfWord) results.add(sb.toString());
-        for (char c : node.children.keySet()) {
-            sb.append(c);
-            findWords(node.children.get(c), results, sb);
+        
+        for (Map.Entry<Character, TrieNode> entry : node.children.entrySet()) {
+            sb.append(entry.getKey());
+            findWords(entry.getValue(), results, sb);
             sb.deleteCharAt(sb.length() - 1); // backtrack
         }
     }
