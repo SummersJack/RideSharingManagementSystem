@@ -3,7 +3,7 @@ import java.util.*;
 
 // Represents a graph where each Location is a node
 public class Graph {
-    private Map<Location, List<Location>> adjList; // Bug: adjList is not initialized
+    private Map<Location, List<Location>> adjList; 
 
     public void addEdge(Location src, Location dest) {
         adjList.computeIfAbsent(src, k -> new ArrayList<>()).add(dest);
