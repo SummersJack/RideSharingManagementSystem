@@ -9,7 +9,7 @@ public class RideSharingManagementSystem {
     private Graph roadNetwork = new Graph();
 
     public RideSharingManagementSystem() {
-        availableDrivers = new PriorityQueue<>(Comparator.comparingDouble(d -> d.rating)); // Adjust priority based on rating
+        availableDrivers = new PriorityQueue<>(Comparator.comparingDouble((Driver d) -> d.rating).reversed());
     }
 
     public void registerRider(String name, String id, Location location) {
@@ -52,54 +52,68 @@ public class RideSharingManagementSystem {
             return "Error: No drivers available!";
         }
 
-        Driver bestMatch = null;
-        double bestDistance = Double.MAX_VALUE;
-
-        for (Driver driver : availableDrivers) {
-            double distance = roadNetwork.calculateShortestDistance(driver.currentLocation, rider.currentLocation);
-            if (distance < bestDistance && driver.isAvailable) {
-                bestDistance = distance;
-                bestMatch = driver;
-            }
-        }
+        Driver bestMatch = availableDrivers.stream()
+                .filter(driver -> driver.isAvailable)
+                .min(Comparator.comparingDouble(driver -> roadNetwork.calculateShortestDistance(driver.currentLocation, rider.currentLocation)))
+                .orElse(null);
 
         if (bestMatch != null) {
-            bestMatch.isAvailable = false;
-            availableDrivers.remove(bestMatch);
-            return String.format("Driver %s matched with Rider %s at a distance of %.2f", bestMatch.name, rider.name, bestDistance);
+            double distance = roadNetwork.calculateShortestDistance(bestMatch.currentLocation, rider.currentLocation);
+            bestMatch.isAvailable = false; // Update driver availability
+            availableDrivers.remove(bestMatch); // Remove the matched driver from available drivers
+            System.out.printf("Driver %s matched with Rider %s at a distance of %.2f km\n", bestMatch.name, rider.name, distance);
+            return "Match successful!";
         }
         return "Error: No matching driver found.";
     }
 
+    public void completeRide(String driverId) {
+        Driver driver = drivers.get(driverId);
+        if (driver == null) {
+            System.out.println("Error: Driver not found!");
+            return;
+        }
+        driver.isAvailable = true;
+        availableDrivers.add(driver); // Re-add driver to the available pool after ride completion
+        System.out.println("Driver " + driver.name + " is now available.");
+    }
+
     public static void main(String[] args) {
         RideSharingManagementSystem system = new RideSharingManagementSystem();
-        
+
         // Register riders
         system.registerRider("Alice", "R1", new Location(1, 1));
         system.registerRider("Bob", "R2", new Location(2, 2));
-        
+
         // Register drivers
         system.registerDriver("Charlie", "D1", new Location(1.5, 1.5), 4.5);
         system.registerDriver("David", "D2", new Location(5, 5), 4.0);
-        
+
         // Search riders and drivers by name
         System.out.println("Searching riders with 'A': " + system.searchRiderByName("A"));
         System.out.println("Searching drivers with 'D': " + system.searchDriverByName("D"));
 
-        // Route network setup
+        // Setup road network and add edges
         setupRoadNetwork(system);
 
-        // Match driver to rider
+        // Match drivers with riders
         System.out.println(system.matchDriver("R1"));
         System.out.println(system.matchDriver("R2"));
+
+        // Complete a ride and update availability
+        system.completeRide("D1");
     }
 
     private static void setupRoadNetwork(RideSharingManagementSystem system) {
         Location loc1 = new Location(1, 1);
         Location loc2 = new Location(2, 2);
         Location loc3 = new Location(1.5, 1.5);
+        Location loc4 = new Location(5, 5); // Additional location for extended network
+
         system.roadNetwork.addEdge(loc1, loc2);
         system.roadNetwork.addEdge(loc1, loc3);
         system.roadNetwork.addEdge(loc2, loc3);
+        system.roadNetwork.addEdge(loc2, loc4); // New edge for more realistic route options
+        system.roadNetwork.addEdge(loc3, loc4); // Additional edge to improve route variety
     }
 }
