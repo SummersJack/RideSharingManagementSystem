@@ -1,4 +1,3 @@
-// src/RideSharingManagementSystem.java
 import java.util.*;
 
 public class RideSharingManagementSystem {
@@ -11,10 +10,14 @@ public class RideSharingManagementSystem {
 
     public RideSharingManagementSystem() {
         // Multi-level priority by sorting based on distance and rating
-        availableDrivers = new PriorityQueue<>(Comparator.comparingDouble(d -> d.calculateDistance(new Location(0, 0)) - d.rating));
+        availableDrivers = new PriorityQueue<>(Comparator.comparingDouble(d -> d.calculateDistance(new Location(0, 0)) / d.rating));
     }
 
     public void registerRider(String name, String id, Location location) {
+        if (riders.containsKey(id)) {
+            System.out.println("Rider ID already exists.");
+            return;
+        }
         Rider newRider = new Rider(name, id, location);
         riders.put(id, newRider);
         riderTrie.insert(name);
@@ -22,6 +25,10 @@ public class RideSharingManagementSystem {
     }
 
     public void registerDriver(String name, String id, Location location, double rating) {
+        if (drivers.containsKey(id)) {
+            System.out.println("Driver ID already exists.");
+            return;
+        }
         Driver newDriver = new Driver(name, id, location, rating);
         drivers.put(id, newDriver);
         driverTrie.insert(name);
@@ -61,7 +68,7 @@ public class RideSharingManagementSystem {
         if (bestMatch != null) {
             bestMatch.isAvailable = false;
             availableDrivers.remove(bestMatch);
-            return "Driver " + bestMatch.name + " matched with Rider " + rider.name + " at a distance of " + bestDistance;
+            return String.format("Driver %s matched with Rider %s at a distance of %.2f", bestMatch.name, rider.name, bestDistance);
         }
         return "No matching driver found.";
     }
@@ -82,15 +89,19 @@ public class RideSharingManagementSystem {
         System.out.println("Searching drivers with 'D': " + system.searchDriverByName("D"));
 
         // Route network setup
+        setupRoadNetwork(system);
+
+        // Match driver to rider
+        System.out.println(system.matchDriver("R1"));
+        System.out.println(system.matchDriver("R2"));
+    }
+
+    private static void setupRoadNetwork(RideSharingManagementSystem system) {
         Location loc1 = new Location(1, 1);
         Location loc2 = new Location(2, 2);
         Location loc3 = new Location(1.5, 1.5);
         system.roadNetwork.addEdge(loc1, loc2);
         system.roadNetwork.addEdge(loc1, loc3);
         system.roadNetwork.addEdge(loc2, loc3);
-
-        // Match driver to rider
-        System.out.println(system.matchDriver("R1"));
-        System.out.println(system.matchDriver("R2"));
     }
 }
