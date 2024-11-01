@@ -9,13 +9,12 @@ public class RideSharingManagementSystem {
     private Graph roadNetwork = new Graph();
 
     public RideSharingManagementSystem() {
-        // Multi-level priority by sorting based on distance and rating
-        availableDrivers = new PriorityQueue<>(Comparator.comparingDouble(d -> d.calculateDistance(new Location(0, 0)) / d.rating));
+        availableDrivers = new PriorityQueue<>(Comparator.comparingDouble(d -> d.rating)); // Adjust priority based on rating
     }
 
     public void registerRider(String name, String id, Location location) {
         if (riders.containsKey(id)) {
-            System.out.println("Rider ID already exists.");
+            System.out.println("Error: Rider ID already exists.");
             return;
         }
         Rider newRider = new Rider(name, id, location);
@@ -26,7 +25,7 @@ public class RideSharingManagementSystem {
 
     public void registerDriver(String name, String id, Location location, double rating) {
         if (drivers.containsKey(id)) {
-            System.out.println("Driver ID already exists.");
+            System.out.println("Error: Driver ID already exists.");
             return;
         }
         Driver newDriver = new Driver(name, id, location, rating);
@@ -44,14 +43,13 @@ public class RideSharingManagementSystem {
         return driverTrie.autocomplete(prefix);
     }
 
-    // Matches drivers to riders based on nearest distance using Dijkstra
     public String matchDriver(String riderId) {
         Rider rider = riders.get(riderId);
         if (rider == null) {
-            return "Rider not found!";
+            return "Error: Rider not found!";
         }
         if (availableDrivers.isEmpty()) {
-            return "No drivers available!";
+            return "Error: No drivers available!";
         }
 
         Driver bestMatch = null;
@@ -70,20 +68,20 @@ public class RideSharingManagementSystem {
             availableDrivers.remove(bestMatch);
             return String.format("Driver %s matched with Rider %s at a distance of %.2f", bestMatch.name, rider.name, bestDistance);
         }
-        return "No matching driver found.";
+        return "Error: No matching driver found.";
     }
 
     public static void main(String[] args) {
         RideSharingManagementSystem system = new RideSharingManagementSystem();
-
+        
         // Register riders
         system.registerRider("Alice", "R1", new Location(1, 1));
         system.registerRider("Bob", "R2", new Location(2, 2));
-
+        
         // Register drivers
         system.registerDriver("Charlie", "D1", new Location(1.5, 1.5), 4.5);
         system.registerDriver("David", "D2", new Location(5, 5), 4.0);
-
+        
         // Search riders and drivers by name
         System.out.println("Searching riders with 'A': " + system.searchRiderByName("A"));
         System.out.println("Searching drivers with 'D': " + system.searchDriverByName("D"));
